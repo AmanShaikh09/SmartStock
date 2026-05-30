@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import Layout from '../components/Layout';
+import BulkQuantityModal from '../components/BulkQuantityModal';
 
 const Inventory = () => {
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [bulkLoading, setBulkLoading] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [newProduct, setNewProduct] = useState({
         name: '',
@@ -152,6 +155,33 @@ const Inventory = () => {
         }
     };
 
+    const handleBulkQuantityUpdate = async (bulkItems) => {
+        setBulkLoading(true);
+        try {
+            // Prepare payload for bulk update
+            const updateData = bulkItems.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity
+            }));
+
+            // Call bulk update endpoint
+            const response = await api.post('/products/bulk-update', { updates: updateData });
+
+            if (response.data.success || response.status === 200) {
+                alert(`Successfully updated ${bulkItems.length} product(s)`);
+                setIsBulkModalOpen(false);
+                fetchProducts();
+            }
+        } catch (error) {
+            const errMsg = error.response?.data?.message || 
+                          error.response?.data?.detail ||
+                          'Failed to update products';
+            alert(errMsg);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
     const filteredProducts = products.filter(p => {
         const matchesSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -231,10 +261,16 @@ const Inventory = () => {
                         </select>
                     </div>
                     {role === 'admin' && (
-                        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                            Add Product
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={() => setIsBulkModalOpen(true)} className="btn btn-secondary" title="Update multiple products at once">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                                Bulk Update
+                            </button>
+                            <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add Product
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -539,6 +575,15 @@ const Inventory = () => {
                     </div>
                 </div>
             )}
+
+            {/* Bulk Quantity Modal */}
+            <BulkQuantityModal
+                isOpen={isBulkModalOpen}
+                onClose={() => setIsBulkModalOpen(false)}
+                products={products}
+                onSubmit={handleBulkQuantityUpdate}
+                isLoading={bulkLoading}
+            />
         </Layout>
     );
 };

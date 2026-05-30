@@ -294,3 +294,141 @@
         font-size: 1.5rem;
     }
 }
+
+/* ===== VALIDATION STYLES ===== */
+
+/* Error Input Field */
+.input-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.input-error:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Error Message */
+.error-message {
+    display: block;
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    font-weight: 500;
+    animation: slideUp 0.2s ease;
+}
+
+/* Success Message */
+.success-message {
+    display: block;
+    color: #10b981;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* Password Strength Container */
+.password-strength-container {
+    margin-top: 10px;
+}
+
+.password-strength-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.password-strength-label strong {
+    font-weight: 600;
+}
+
+.password-strength-bar {
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.password-strength-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Password strength colors */
+.strength-weak {
+    background-color: #ef4444;
+}
+
+.strength-fair {
+    background-color: #f59e0b;
+}
+
+.strength-good {
+    background-color: #eab308;
+}
+
+.strength-strong {
+    background-color: #84cc16;
+}
+
+.strength-very-strong {
+    background-color: #10b981;
+}
+
+/* Validation feedback animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(20px);
+    }
+}
+
+/* Field validation states */
+.input-group.error .input-field {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.input-group.success .input-field {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+/* Focus and interaction improvements */
+.input-field:focus + .error-message {
+    color: #ef4444;
+}
+
+/* Disabled button state for validation */
+button:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}

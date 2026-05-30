@@ -247,3 +247,90 @@ def delete_product(product_id):
             })
             
     return jsonify({"msg": "Product deleted successfully"}), 200
+
+
+@products.route("/bulk-update", methods=["POST"])
+def bulk_update_products():
+    """Bulk update product quantities"""
+    data = request.json
+    updates = data.get("updates", [])
+    
+    if not isinstance(updates, list) or len(updates) == 0:
+        return jsonify({"msg": "Updates must be a non-empty array"}), 400
+    
+    successful = 0
+    failed = 0
+    errors = []
+    
+    for update in updates:
+        product_id = update.get("product_id")
+        quantity = update.get("quantity")
+        
+        if not product_id:
+            errors.append("Missing product_id")
+            failed += 1
+            continue
+        
+        if quantity is None or not isinstance(quantity, (int, float)):
+            errors.append(f"Invalid quantity for product {product_id}")
+            failed += 1
+            continue
+        
+        try:
+            quantity = int(quantity)
+            if quantity < 0:
+                errors.append(f"Negative quantity for product {product_id}")
+                failed += 1
+                continue
+                
+            oid = ObjectId(product_id)
+        except Exception as e:
+            errors.append(f"Invalid product ID: {product_id}")
+            failed += 1
+            continue
+        
+        # Fetch old product before update
+        old_product = products_collection.find_one({"_id": oid})
+        if not old_product:
+            errors.append(f"Product not found: {product_id}")
+            failed += 1
+            continue
+        
+        # Update quantity
+        result = products_collection.update_one(
+            {"_id": oid},
+            {"$set": {"quantity": quantity}}
+        )
+        
+        if result.matched_count > 0:
+            successful += 1
+            
+            # Log transaction
+            old_qty = old_product.get("quantity", 0)
+            diff = quantity - old_qty
+            
+            if diff != 0:
+                transactions_collection.insert_one({
+                    "product_id": str(oid),
+                    "product_name": old_product.get("name", "Unknown Product"),
+                    "type": "STOCK_IN" if diff > 0 else "STOCK_OUT",
+                    "quantity": abs(diff),
+                    "reason": "Bulk Stock Update",
+                    "created_at": datetime.datetime.utcnow()
+                })
+            
+            # Check for low stock trigger
+            threshold = old_product.get("reorder_point", old_product.get("min_stock_threshold", 5))
+            if quantity < threshold and old_qty >= threshold:
+                notify_low_stock(old_product.get("name", "Unknown Product"), quantity, threshold)
+        else:
+            failed += 1
+            errors.append(f"Failed to update product {product_id}")
+    
+    return jsonify({
+        "success": True,
+        "message": f"Updated {successful} product(s), {failed} failed",
+        "successful": successful,
+        "failed": failed,
+        "errors": errors if errors else []
+    }), 200
