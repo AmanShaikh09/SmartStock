@@ -6,6 +6,7 @@ from routes.reports import reports
 from routes.transactions import transactions
 from routes.assistant import assistant
 from database import products_collection, users_collection, transactions_collection
+import os
 
 app = Flask(__name__)
 
@@ -15,12 +16,9 @@ CORS(
     resources={
         r"/*": {
             "origins": [
+                "https://your-frontend-name.onrender.com",
                 "http://localhost:5173",
-                "http://localhost:5174",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:5174",
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173"
             ]
         }
     },
@@ -64,5 +62,12 @@ def get_landing_stats():
 
 
 
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5001, debug=True)
+    port = int(os.environ.get("PORT", 5001))
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )
